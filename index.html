@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoilAI — Ecosystem Restoration Platform | AA Gwabare Group</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --soil: #1a3a1a;
+    --leaf: #2d6a2d;
+    --moss: #4a8c3f;
+    --sage: #7ab87a;
+    --mist: #c8e6c9;
+    --earth: #8b5e3c;
+    --amber: #d4860a;
+    --sand: #f5f0e8;
+    --white: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #5a6a5a;
+    --danger: #c0392b;
+    --border: rgba(45,106,45,0.15);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--white);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(26, 58, 26, 0.97);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none;
+  }
+  .nav-logo {
+    width: 36px; height: 36px;
+    background: var(--moss);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-logo svg { width: 20px; height: 20px; fill: white; }
+  .nav-brand-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; color: white; }
+  .nav-brand-text span { color: var(--sage); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.875rem; font-weight: 400; transition: color 0.2s; }
+  .nav-links a:hover { color: white; }
+  .nav-cta {
+    background: var(--moss); color: white;
+    border: none; border-radius: 8px;
+    padding: 0.5rem 1.25rem; font-size: 0.875rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    text-decoration: none; transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--sage); }
+  .mobile-menu-btn { display: none; background: none; border: none; cursor: pointer; color: white; font-size: 1.5rem; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    background: linear-gradient(160deg, var(--soil) 0%, #0d2610 40%, #1a3a2a 100%);
+    display: flex; align-items: center;
+    padding: 6rem 2rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg-pattern {
+    position: absolute; inset: 0; opacity: 0.04;
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.8) 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+  .hero-glow {
+    position: absolute; top: -200px; right: -200px;
+    width: 600px; height: 600px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,140,63,0.2) 0%, transparent 70%);
+  }
+  .hero-inner { max-width: 1200px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; position: relative; z-index: 1; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(74,140,63,0.2); border: 1px solid rgba(74,140,63,0.4);
+    border-radius: 20px; padding: 0.375rem 1rem;
+    font-size: 0.8rem; color: var(--sage); font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+  .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--sage); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800; line-height: 1.1;
+    color: white; margin-bottom: 1.5rem;
+  }
+  .hero-title .accent { color: var(--sage); display: block; }
+  .hero-desc { color: rgba(255,255,255,0.7); font-size: 1.1rem; line-height: 1.7; margin-bottom: 2.5rem; max-width: 480px; }
+  .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--moss); color: white;
+    border: none; border-radius: 10px;
+    padding: 0.875rem 2rem; font-size: 1rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    text-decoration: none; transition: all 0.2s; display: inline-block;
+  }
+  .btn-primary:hover { background: #3d7a32; transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent; color: white;
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 10px;
+    padding: 0.875rem 2rem; font-size: 1rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    text-decoration: none; transition: all 0.2s; display: inline-block;
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); }
+  .hero-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-top: 3rem; }
+  .hero-stat { text-align: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); }
+  .hero-stat-num { font-family: 'Syne', sans-serif; font-size: 1.75rem; font-weight: 700; color: var(--sage); }
+  .hero-stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-top: 2px; }
+
+  /* HERO RIGHT: ANIMATED DASHBOARD */
+  .hero-dashboard {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px; padding: 1.5rem;
+    backdrop-filter: blur(10px);
+  }
+  .dashboard-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .dashboard-title { font-size: 0.875rem; font-weight: 500; color: rgba(255,255,255,0.9); }
+  .status-pill {
+    font-size: 0.7rem; background: rgba(74,140,63,0.25);
+    color: var(--sage); border-radius: 20px; padding: 0.25rem 0.75rem;
+    font-weight: 500; border: 1px solid rgba(74,140,63,0.3);
+  }
+  .site-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem; }
+  .site-card {
+    background: rgba(255,255,255,0.06); border-radius: 12px;
+    padding: 0.875rem; border: 1px solid rgba(255,255,255,0.08);
+  }
+  .site-card-label { font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-bottom: 0.25rem; }
+  .site-card-val { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; color: white; }
+  .site-card-sub { font-size: 0.7rem; margin-top: 2px; }
+  .site-card-sub.good { color: var(--sage); }
+  .site-card-sub.warn { color: #f5a623; }
+  .site-card-sub.bad { color: #e74c3c; }
+  .bar-chart { margin-bottom: 1.25rem; }
+  .bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+  .bar-label { font-size: 0.72rem; color: rgba(255,255,255,0.6); width: 120px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 1.5s ease; }
+  .bar-fill.green { background: var(--moss); }
+  .bar-fill.amber { background: #d4860a; }
+  .bar-fill.red { background: #c0392b; }
+  .bar-pct { font-size: 0.7rem; color: rgba(255,255,255,0.6); width: 32px; text-align: right; }
+  .ai-reco {
+    background: rgba(74,140,63,0.12); border: 1px solid rgba(74,140,63,0.25);
+    border-radius: 10px; padding: 0.875rem;
+  }
+  .ai-reco-header { font-size: 0.72rem; color: var(--sage); font-weight: 600; margin-bottom: 0.5rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  .ai-reco-text { font-size: 0.8rem; color: rgba(255,255,255,0.8); line-height: 1.5; }
+
+  /* SECTIONS */
+  section { padding: 6rem 2rem; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .section-label { font-size: 0.8rem; font-weight: 600; color: var(--moss); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .section-title { font-family: 'Syne', sans-serif; font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 700; color: var(--soil); line-height: 1.2; margin-bottom: 1rem; }
+  .section-desc { color: var(--text-muted); font-size: 1.05rem; line-height: 1.7; max-width: 600px; }
+
+  /* PROBLEM */
+  #problem { background: var(--sand); }
+  .problem-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-top: 3rem; }
+  .problem-card {
+    background: white; border-radius: 16px; padding: 2rem;
+    border: 1px solid var(--border); position: relative; overflow: hidden;
+  }
+  .problem-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--danger); }
+  .problem-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .problem-card h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--soil); }
+  .problem-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+
+  /* SOLUTION */
+  #solution { background: white; }
+  .layers-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-top: 3rem; }
+  .layer-card {
+    background: var(--sand); border-radius: 16px; padding: 2rem;
+    border: 1px solid var(--border); position: relative; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .layer-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(45,106,45,0.1); }
+  .layer-num { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--moss); background: rgba(74,140,63,0.1); display: inline-block; padding: 0.25rem 0.6rem; border-radius: 6px; margin-bottom: 1rem; }
+  .layer-card h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--soil); }
+  .layer-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+  .ai-engine {
+    margin-top: 2rem; background: var(--soil); border-radius: 16px; padding: 2.5rem;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: center;
+  }
+  .ai-engine h3 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; color: white; margin-bottom: 1rem; }
+  .ai-engine p { color: rgba(255,255,255,0.7); font-size: 0.95rem; line-height: 1.7; }
+  .ai-outputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .ai-output { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 1rem; }
+  .ai-output-icon { font-size: 1.25rem; margin-bottom: 0.5rem; }
+  .ai-output h4 { font-size: 0.875rem; font-weight: 500; color: white; }
+  .ai-output p { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-top: 2px; }
+
+  /* SOIL ASSESSMENT TOOL */
+  #tool { background: var(--sand); }
+  .tool-wrapper {
+    background: white; border-radius: 20px; padding: 2.5rem;
+    border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    margin-top: 3rem;
+  }
+  .tool-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+  .tool-tab {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.5rem 1rem; font-size: 0.875rem; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .tool-tab.active { background: var(--soil); color: white; border-color: var(--soil); }
+  .form-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.25rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+  .form-group label { font-size: 0.8rem; font-weight: 500; color: var(--text-muted); }
+  .form-group input, .form-group select {
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.625rem 0.875rem; font-size: 0.9rem;
+    font-family: 'DM Sans', sans-serif; color: var(--text);
+    background: var(--sand); transition: border-color 0.2s;
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--moss); }
+  .form-group .unit { font-size: 0.7rem; color: var(--text-muted); }
+  .analyze-btn {
+    background: var(--soil); color: white; border: none; border-radius: 10px;
+    padding: 0.875rem 2.5rem; font-size: 1rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s; margin-top: 1.5rem; display: block; width: 100%;
+  }
+  .analyze-btn:hover { background: var(--leaf); }
+  .result-panel {
+    display: none; margin-top: 2rem;
+    background: var(--sand); border-radius: 14px; padding: 2rem;
+    border: 1px solid var(--border);
+  }
+  .result-panel.visible { display: block; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .severity-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin: 1rem 0; }
+  .severity-seg { transition: flex 0.8s ease; }
+  .severity-critical { background: #c0392b; }
+  .severity-high { background: #e67e22; }
+  .severity-moderate { background: #f1c40f; }
+  .severity-low { background: var(--moss); }
+  .recommendations-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1rem; margin-top: 1.5rem; }
+  .reco-card { background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border); }
+  .reco-card-title { font-weight: 600; font-size: 0.9rem; color: var(--soil); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px; }
+  .reco-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+
+  /* PATHWAYS */
+  #pathways { background: white; }
+  .pathways-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.5rem; margin-top: 3rem; }
+  .pathway-card {
+    border-radius: 16px; padding: 2rem; border: 1px solid var(--border);
+    background: white; transition: all 0.2s; cursor: pointer;
+  }
+  .pathway-card:hover { border-color: var(--moss); box-shadow: 0 8px 24px rgba(45,106,45,0.1); }
+  .pathway-num { font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--moss); letter-spacing: 0.1em; margin-bottom: 1rem; }
+  .pathway-card h3 { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--soil); margin-bottom: 0.75rem; }
+  .pathway-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+  .pathway-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+  .tag { font-size: 0.75rem; background: rgba(74,140,63,0.08); color: var(--leaf); border-radius: 6px; padding: 0.2rem 0.6rem; font-weight: 500; border: 1px solid rgba(74,140,63,0.15); }
+
+  /* TEAM */
+  #team { background: var(--sand); }
+  .team-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.5rem; margin-top: 3rem; }
+  .team-card {
+    background: white; border-radius: 16px; padding: 1.75rem;
+    border: 1px solid var(--border); text-align: center;
+    transition: transform 0.2s;
+  }
+  .team-card:hover { transform: translateY(-4px); }
+  .team-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--soil); margin: 0 auto 1rem;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700;
+    color: var(--sage);
+  }
+  .team-name { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--soil); margin-bottom: 0.25rem; }
+  .team-role { font-size: 0.8rem; font-weight: 600; color: var(--moss); margin-bottom: 0.75rem; }
+  .team-desc { font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; }
+
+  /* BUDGET */
+  #budget { background: white; }
+  .budget-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; margin-top: 3rem; }
+  .budget-chart { position: relative; }
+  .budget-donut { width: 240px; height: 240px; margin: 0 auto; }
+  .budget-donut svg { width: 100%; height: 100%; }
+  .budget-total { text-align: center; margin-top: 1rem; }
+  .budget-total-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--soil); }
+  .budget-total-label { font-size: 0.85rem; color: var(--text-muted); }
+  .budget-items { display: flex; flex-direction: column; gap: 1rem; }
+  .budget-item { display: flex; align-items: center; gap: 1rem; }
+  .budget-color { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .budget-item-info { flex: 1; }
+  .budget-item-name { font-size: 0.9rem; font-weight: 500; color: var(--soil); }
+  .budget-item-sub { font-size: 0.8rem; color: var(--text-muted); }
+  .budget-item-amount { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--soil); font-size: 0.95rem; }
+
+  /* MARKET */
+  #market { background: var(--sand); }
+  .market-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.25rem; margin-top: 3rem; }
+  .market-card { background: white; border-radius: 14px; padding: 1.5rem; border: 1px solid var(--border); }
+  .market-card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .market-card h3 { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; color: var(--soil); margin-bottom: 0.5rem; }
+  .market-card p { font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; }
+
+  /* CTA */
+  #cta {
+    background: var(--soil);
+    text-align: center; padding: 6rem 2rem;
+  }
+  #cta h2 { font-family: 'Syne', sans-serif; font-size: clamp(2rem,4vw,3rem); font-weight: 800; color: white; margin-bottom: 1rem; }
+  #cta p { color: rgba(255,255,255,0.7); font-size: 1.1rem; max-width: 560px; margin: 0 auto 2.5rem; }
+  .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  /* FOOTER */
+  footer {
+    background: #0d1f0d; padding: 3rem 2rem;
+    color: rgba(255,255,255,0.5); font-size: 0.875rem;
+  }
+  .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+  .footer-brand { font-family: 'Syne', sans-serif; color: white; font-weight: 700; }
+  .footer-brand span { color: var(--sage); }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a { color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--sage); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .nav-links, .nav-cta { display: none; }
+    .mobile-menu-btn { display: block; }
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-dashboard { display: none; }
+    .problem-grid, .layers-grid, .pathways-grid, .team-grid { grid-template-columns: 1fr; }
+    .market-cards { grid-template-columns: repeat(2,1fr); }
+    .budget-inner { grid-template-columns: 1fr; }
+    .ai-engine { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .recommendations-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-brand">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C8 2 4 5 4 9c0 2.5 1.5 4.7 3.5 6L12 22l4.5-7C18.5 13.7 20 11.5 20 9c0-4-4-7-8-7zm0 9.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 6.5 12 6.5 14.5 7.6 14.5 9 13.4 11.5 12 11.5z"/>
+      </svg>
+    </div>
+    <span class="nav-brand-text">Soil<span>AI</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#tool">Assessment Tool</a></li>
+    <li><a href="#pathways">Pathways</a></li>
+    <li><a href="#team">Team</a></li>
+  </ul>
+  <a href="#tool" class="nav-cta">Try Demo</a>
+  <button class="mobile-menu-btn" onclick="toggleMobileNav()">☰</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg-pattern"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">TICC 2025/2026 Innovation Submission</div>
+      <h1 class="hero-title">
+        AI-Driven Soil Health
+        <span class="accent">&amp; Ecosystem Restoration</span>
+      </h1>
+      <p class="hero-desc">
+        A decision support platform integrating soil science, low-cost sensors, and geospatial AI to guide effective remediation of oil &amp; gas–impacted lands across Nigeria.
+      </p>
+      <div class="hero-actions">
+        <a href="#tool" class="btn-primary">Try the Assessment Tool</a>
+        <a href="#solution" class="btn-outline">Learn How It Works</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">₦53M</div>
+          <div class="hero-stat-label">Pilot Budget</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">4</div>
+          <div class="hero-stat-label">Data Layers</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">HSE</div>
+          <div class="hero-stat-label">Thematic Focus</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-dashboard">
+        <div class="dashboard-header">
+          <span class="dashboard-title">Site Assessment — Ogoni Field, Rivers State</span>
+          <span class="status-pill">● Live Analysis</span>
+        </div>
+        <div class="site-cards">
+          <div class="site-card">
+            <div class="site-card-label">Soil pH</div>
+            <div class="site-card-val">4.2</div>
+            <div class="site-card-sub bad">↓ Highly Acidic</div>
+          </div>
+          <div class="site-card">
+            <div class="site-card-label">Hydrocarbon (TPH)</div>
+            <div class="site-card-val">8,420</div>
+            <div class="site-card-sub bad">mg/kg — Critical</div>
+          </div>
+          <div class="site-card">
+            <div class="site-card-label">Organic Carbon</div>
+            <div class="site-card-val">0.8%</div>
+            <div class="site-card-sub warn">↓ Below Threshold</div>
+          </div>
+          <div class="site-card">
+            <div class="site-card-label">Recovery Score</div>
+            <div class="site-card-val">23%</div>
+            <div class="site-card-sub warn">18-mo projected</div>
+          </div>
+        </div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <span class="bar-label">Bioremediation fit</span>
+            <div class="bar-track"><div class="bar-fill green" style="width:78%"></div></div>
+            <span class="bar-pct">78%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Phytoremediation fit</span>
+            <div class="bar-track"><div class="bar-fill amber" style="width:54%"></div></div>
+            <span class="bar-pct">54%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Amendment need</span>
+            <div class="bar-track"><div class="bar-fill red" style="width:91%"></div></div>
+            <span class="bar-pct">91%</span>
+          </div>
+        </div>
+        <div class="ai-reco">
+          <div class="ai-reco-header">⚡ AI Recommendation</div>
+          <div class="ai-reco-text">Priority: Biochar + compost amendment to raise pH. Deploy Typha latifolia for TPH uptake. Estimated restoration timeline: 24 months with quarterly monitoring.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="container">
+    <div class="section-label">The Problem</div>
+    <h2 class="section-title">Nigeria's oil &amp; gas industry has left a legacy of degraded land</h2>
+    <p class="section-desc">Decades of exploration and production have caused widespread environmental damage that current approaches fail to adequately address.</p>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">🛢️</div>
+        <h3>Widespread Contamination</h3>
+        <p>Oil &amp; gas activities have caused soil degradation, hydrocarbon contamination, and loss of biological activity across Niger Delta host communities, affecting livelihoods and ecosystems.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">📋</div>
+        <h3>One-Size-Fits-All Approach</h3>
+        <p>Current remediation uses uniform clean-up methods that ignore site-specific soil conditions — pH, organic carbon, contamination type — leading to poor long-term restoration outcomes.</p>
+      </div>
+      <div class="problem-card">
+        <div class="problem-icon">🔄</div>
+        <h3>Repeated Degradation Cycles</h3>
+        <p>Without targeted restoration strategies, remediated lands often degrade again, trapping host communities in endless cycles of environmental damage and economic loss.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div class="container">
+    <div class="section-label">Our Solution</div>
+    <h2 class="section-title">An integrated platform: soil science, sensors &amp; AI</h2>
+    <p class="section-desc">Three data layers feed a rule-based and AI-assisted analytical engine that generates precise, site-specific restoration recommendations.</p>
+    <div class="layers-grid">
+      <div class="layer-card">
+        <div class="layer-num">LAYER 01</div>
+        <h3>Field Soil Data</h3>
+        <p>pH levels, electrical conductivity, organic carbon content, hydrocarbon contamination levels (TPH), heavy metal concentrations, and real-time soil moisture status from each unique site.</p>
+      </div>
+      <div class="layer-card">
+        <div class="layer-num">LAYER 02</div>
+        <h3>Sensor &amp; Lab Inputs</h3>
+        <p>Low-cost field sensors and laboratory analysis provide real-time monitoring, validation data, and longitudinal tracking to ensure restoration is proceeding as modelled.</p>
+      </div>
+      <div class="layer-card">
+        <div class="layer-num">LAYER 03</div>
+        <h3>Remote Sensing &amp; GIS</h3>
+        <p>Satellite imagery and geospatial data assess vegetation loss, land cover changes, and recovery patterns over time — enabling landscape-scale analysis and progress mapping.</p>
+      </div>
+    </div>
+    <div class="ai-engine">
+      <div>
+        <h3>AI-Assisted Analytical Engine</h3>
+        <p>Rule-based and machine learning algorithms classify land degradation severity and generate prioritized, site-specific restoration recommendations — moving beyond guesswork to data-driven action plans that improve with every site assessed.</p>
+      </div>
+      <div class="ai-outputs">
+        <div class="ai-output">
+          <div class="ai-output-icon">📊</div>
+          <h4>Degradation Classification</h4>
+          <p>Severity scoring per site</p>
+        </div>
+        <div class="ai-output">
+          <div class="ai-output-icon">🗺️</div>
+          <h4>Restoration Plans</h4>
+          <p>Time-bound remediation pathways</p>
+        </div>
+        <div class="ai-output">
+          <div class="ai-output-icon">📈</div>
+          <h4>Monitoring Dashboard</h4>
+          <p>Track recovery over time</p>
+        </div>
+        <div class="ai-output">
+          <div class="ai-output-icon">✅</div>
+          <h4>Compliance Reports</h4>
+          <p>ESG &amp; regulatory documentation</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOIL ASSESSMENT TOOL -->
+<section id="tool">
+  <div class="container">
+    <div class="section-label">Interactive Demo</div>
+    <h2 class="section-title">Site soil assessment tool</h2>
+    <p class="section-desc">Enter your site's soil parameters below. The platform will classify degradation severity and generate tailored restoration recommendations.</p>
+    <div class="tool-wrapper">
+      <div class="tool-tabs">
+        <button class="tool-tab active" onclick="setTab('basic', this)">Basic Parameters</button>
+        <button class="tool-tab" onclick="setTab('contam', this)">Contamination Data</button>
+        <button class="tool-tab" onclick="setTab('location', this)">Site Location</button>
+      </div>
+
+      <div id="tab-basic">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Soil pH</label>
+            <input type="number" id="ph" min="0" max="14" step="0.1" placeholder="e.g. 5.5" value="">
+            <span class="unit">Scale 0–14 (normal soil: 6–7)</span>
+          </div>
+          <div class="form-group">
+            <label>Electrical Conductivity</label>
+            <input type="number" id="ec" min="0" max="20" step="0.1" placeholder="e.g. 0.8" value="">
+            <span class="unit">dS/m (normal: &lt;1 dS/m)</span>
+          </div>
+          <div class="form-group">
+            <label>Organic Carbon Content</label>
+            <input type="number" id="oc" min="0" max="20" step="0.1" placeholder="e.g. 2.1" value="">
+            <span class="unit">% (healthy: &gt;2%)</span>
+          </div>
+          <div class="form-group">
+            <label>Moisture Status</label>
+            <select id="moisture">
+              <option value="">Select...</option>
+              <option value="dry">Severely Dry</option>
+              <option value="low">Low Moisture</option>
+              <option value="optimal">Optimal</option>
+              <option value="waterlogged">Waterlogged</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Soil Texture</label>
+            <select id="texture">
+              <option value="">Select...</option>
+              <option value="sandy">Sandy</option>
+              <option value="loamy">Loamy</option>
+              <option value="clay">Clay</option>
+              <option value="silty">Silty</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Vegetation Cover</label>
+            <select id="veg">
+              <option value="">Select...</option>
+              <option value="none">None (0%)</option>
+              <option value="sparse">Sparse (1–25%)</option>
+              <option value="moderate">Moderate (26–60%)</option>
+              <option value="good">Good (60%+)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-contam" style="display:none">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Total Petroleum Hydrocarbons (TPH)</label>
+            <input type="number" id="tph" min="0" placeholder="e.g. 5000" value="">
+            <span class="unit">mg/kg (limit: &lt;5,000 mg/kg)</span>
+          </div>
+          <div class="form-group">
+            <label>Lead (Pb)</label>
+            <input type="number" id="pb" min="0" placeholder="e.g. 85" value="">
+            <span class="unit">mg/kg (limit: &lt;85 mg/kg)</span>
+          </div>
+          <div class="form-group">
+            <label>Zinc (Zn)</label>
+            <input type="number" id="zn" min="0" placeholder="e.g. 200" value="">
+            <span class="unit">mg/kg (limit: &lt;200 mg/kg)</span>
+          </div>
+          <div class="form-group">
+            <label>Nickel (Ni)</label>
+            <input type="number" id="ni" min="0" placeholder="e.g. 50" value="">
+            <span class="unit">mg/kg (limit: &lt;50 mg/kg)</span>
+          </div>
+          <div class="form-group">
+            <label>Contamination Source</label>
+            <select id="source">
+              <option value="">Select...</option>
+              <option value="spill">Oil Spill</option>
+              <option value="pipeline">Pipeline Leak</option>
+              <option value="refinery">Refinery Discharge</option>
+              <option value="flaring">Gas Flaring</option>
+              <option value="mixed">Multiple Sources</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Contamination Age</label>
+            <select id="age">
+              <option value="">Select...</option>
+              <option value="recent">Recent (&lt;1 year)</option>
+              <option value="medium">Medium (1–5 years)</option>
+              <option value="old">Old (&gt;5 years)</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-location" style="display:none">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>State / Region</label>
+            <select id="state">
+              <option value="">Select...</option>
+              <option value="rivers">Rivers State</option>
+              <option value="delta">Delta State</option>
+              <option value="bayelsa">Bayelsa State</option>
+              <option value="akwa">Akwa Ibom</option>
+              <option value="imo">Imo State</option>
+              <option value="cross">Cross River</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Site Area (hectares)</label>
+            <input type="number" id="area" min="0" placeholder="e.g. 2.5" value="">
+            <span class="unit">ha</span>
+          </div>
+          <div class="form-group">
+            <label>Proximity to Water Body</label>
+            <select id="water">
+              <option value="">Select...</option>
+              <option value="adjacent">Adjacent (&lt;50m)</option>
+              <option value="near">Near (50–200m)</option>
+              <option value="far">Distant (&gt;200m)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="analyze-btn" onclick="runAnalysis()">🔬 Analyze Site &amp; Generate Recommendations</button>
+
+      <div id="result-panel" class="result-panel">
+        <h3 style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;color:var(--soil);margin-bottom:0.5rem;">Assessment Results</h3>
+        <div id="severity-label" style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem;"></div>
+        <div class="severity-bar" id="severity-bar"></div>
+        <div id="result-content"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PATHWAYS -->
+<section id="pathways">
+  <div class="container">
+    <div class="section-label">Restoration Pathways</div>
+    <h2 class="section-title">Four site-specific restoration pathways</h2>
+    <p class="section-desc">The platform matches each site to the most effective combination of evidence-based remediation strategies, selected based on actual soil and contamination data.</p>
+    <div class="pathways-grid">
+      <div class="pathway-card">
+        <div class="pathway-num">PATHWAY 01</div>
+        <h3>Bioremediation &amp; Phytoremediation</h3>
+        <p>Microbial degradation strategies and targeted plant species selection based on contamination type and soil chemistry. The platform matches site conditions to proven bioremediation protocols and identifies the optimal plant species for hydrocarbon uptake and soil stabilisation.</p>
+        <div class="pathway-tags">
+          <span class="tag">Microbial treatment</span>
+          <span class="tag">Plant selection</span>
+          <span class="tag">TPH reduction</span>
+        </div>
+      </div>
+      <div class="pathway-card">
+        <div class="pathway-num">PATHWAY 02</div>
+        <h3>Soil Amendment Recommendations</h3>
+        <p>Tailored amendment prescriptions including biochar, compost, organic residues, and chemical stabilisers — selected based on soil deficiency analysis and local material availability. Targets pH correction, organic matter restoration, and structural improvement.</p>
+        <div class="pathway-tags">
+          <span class="tag">Biochar</span>
+          <span class="tag">Compost</span>
+          <span class="tag">pH correction</span>
+        </div>
+      </div>
+      <div class="pathway-card">
+        <div class="pathway-num">PATHWAY 03</div>
+        <h3>Vegetation &amp; Crop Recovery Species</h3>
+        <p>Data-driven selection of vegetation and crop species best suited for ecosystem recovery on each specific site, considering soil chemistry, local climate, and community livelihood needs to ensure post-remediation land use is productive and sustainable.</p>
+        <div class="pathway-tags">
+          <span class="tag">Native species</span>
+          <span class="tag">Food crops</span>
+          <span class="tag">Ecosystem recovery</span>
+        </div>
+      </div>
+      <div class="pathway-card">
+        <div class="pathway-num">PATHWAY 04</div>
+        <h3>Monitoring &amp; Compliance Plans</h3>
+        <p>Time-bound restoration schedules with milestone tracking, progress reporting, and automated compliance documentation for regulators and ESG reporting. Keeps operators accountable and provides verifiable proof of restoration progress.</p>
+        <div class="pathway-tags">
+          <span class="tag">Milestone tracking</span>
+          <span class="tag">ESG reports</span>
+          <span class="tag">Regulatory compliance</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="container">
+    <div class="section-label">The Team</div>
+    <h2 class="section-title">A multidisciplinary team of four specialists</h2>
+    <p class="section-desc">Agronomy + Computer Engineering + GIS &amp; Spatial Analysis + Field Operations = end-to-end execution capability.</p>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-avatar">AA</div>
+        <div class="team-name">Aliyu Abdullahi</div>
+        <div class="team-role">Founder &amp; Project Lead</div>
+        <p class="team-desc">Agronomy and Soil Systems Specialist. Leads overall project design, soil science framework, and stakeholder coordination.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">LA</div>
+        <div class="team-name">Lucky Ajidoku</div>
+        <div class="team-role">Computer Engineer</div>
+        <p class="team-desc">Environmental Technology Specialist. Provides expertise in computing systems, AI integration, and platform architecture.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">AF</div>
+        <div class="team-name">Abubakar Fate</div>
+        <div class="team-role">GIS &amp; Spatial Analyst</div>
+        <p class="team-desc">Agronomist &amp; Data Analyst. Focuses on geospatial analysis, GIS mapping, satellite imagery, and spatial data modelling.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-avatar">AU</div>
+        <div class="team-name">Adnan Umar</div>
+        <div class="team-role">Field Operations Lead</div>
+        <p class="team-desc">Agronomist &amp; Monitoring Lead. Oversees field data collection, soil sampling protocols, and on-ground monitoring activities.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BUDGET -->
+<section id="budget">
+  <div class="container">
+    <div class="section-label">Funding &amp; Budget</div>
+    <h2 class="section-title">Pilot budget allocation: 12-month plan</h2>
+    <p class="section-desc">A ₦53 million pilot phase across five strategic pillars, with primary funding through NCDMB TIIC incubation support.</p>
+    <div class="budget-inner">
+      <div class="budget-chart">
+        <div class="budget-donut">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Donut chart: total 53M -->
+            <!-- Platform 18M = 34%, Personnel 12M = 23%, Field 10M = 19%, Deploy+BD 13M = 24% -->
+            <circle cx="100" cy="100" r="70" fill="none" stroke="#f5f0e8" stroke-width="28"/>
+            <!-- Platform 34% = 122.4deg -->
+            <circle cx="100" cy="100" r="70" fill="none" stroke="#2d6a2d" stroke-width="28"
+              stroke-dasharray="123 316" stroke-dashoffset="0" transform="rotate(-90 100 100)"/>
+            <!-- Personnel 23% = 82.8deg -->
+            <circle cx="100" cy="100" r="70" fill="none" stroke="#4a8c3f" stroke-width="28"
+              stroke-dasharray="83 356" stroke-dashoffset="-123" transform="rotate(-90 100 100)"/>
+            <!-- Field 19% = 68.4deg -->
+            <circle cx="100" cy="100" r="70" fill="none" stroke="#7ab87a" stroke-width="28"
+              stroke-dasharray="68 371" stroke-dashoffset="-206" transform="rotate(-90 100 100)"/>
+            <!-- Deploy+BD 24% = 86.4deg -->
+            <circle cx="100" cy="100" r="70" fill="none" stroke="#d4860a" stroke-width="28"
+              stroke-dasharray="87 352" stroke-dashoffset="-274" transform="rotate(-90 100 100)"/>
+            <text x="100" y="95" text-anchor="middle" font-family="Syne,sans-serif" font-size="22" font-weight="800" fill="#1a3a1a">₦53M</text>
+            <text x="100" y="115" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#5a6a5a">Total Budget</text>
+          </svg>
+        </div>
+        <div class="budget-total">
+          <div class="budget-total-label">12-Month Pilot Phase</div>
+        </div>
+      </div>
+      <div class="budget-items">
+        <div class="budget-item">
+          <div class="budget-color" style="background:#2d6a2d"></div>
+          <div class="budget-item-info">
+            <div class="budget-item-name">Platform &amp; Data Analytics</div>
+            <div class="budget-item-sub">AI engine, database, dashboard, GIS integration</div>
+          </div>
+          <div class="budget-item-amount">₦18M</div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-color" style="background:#4a8c3f"></div>
+          <div class="budget-item-info">
+            <div class="budget-item-name">Personnel &amp; Consultants</div>
+            <div class="budget-item-sub">Team salaries, scientists, GIS specialists</div>
+          </div>
+          <div class="budget-item-amount">₦12M</div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-color" style="background:#7ab87a"></div>
+          <div class="budget-item-info">
+            <div class="budget-item-name">Field Equipment &amp; Testing</div>
+            <div class="budget-item-sub">Sensors, lab equipment, sampling kits</div>
+          </div>
+          <div class="budget-item-amount">₦10M</div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-color" style="background:#d4860a"></div>
+          <div class="budget-item-info">
+            <div class="budget-item-name">Deployment, BD &amp; Regulatory</div>
+            <div class="budget-item-sub">Site deployment, monitoring, industry engagement</div>
+          </div>
+          <div class="budget-item-amount">₦13M</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARKET -->
+<section id="market">
+  <div class="container">
+    <div class="section-label">Market &amp; Revenue</div>
+    <h2 class="section-title">Four revenue streams across the value chain</h2>
+    <p class="section-desc">A scalable business model serving Nigeria's growing environmental compliance market.</p>
+    <div class="market-cards">
+      <div class="market-card">
+        <div class="market-card-icon">🔍</div>
+        <h3>Site Assessment Services</h3>
+        <p>Service revenue from oil &amp; gas companies for comprehensive site assessments, soil testing, and remediation planning.</p>
+      </div>
+      <div class="market-card">
+        <div class="market-card-icon">💻</div>
+        <h3>Platform Licensing</h3>
+        <p>Recurring licensing of the decision support platform to remediation contractors and environmental regulators.</p>
+      </div>
+      <div class="market-card">
+        <div class="market-card-icon">🤝</div>
+        <h3>Strategic Partnerships</h3>
+        <p>Joint projects with environmental service firms and research institutions for co-development opportunities.</p>
+      </div>
+      <div class="market-card">
+        <div class="market-card-icon">🏛️</div>
+        <h3>NCDMB Incubation</h3>
+        <p>Initial seed funding through NCDMB TIIC to accelerate platform development and pilot deployment.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="container">
+    <h2>Restoring Nigeria's Land,<br>One Site at a Time</h2>
+    <p>Integrating technology, soil science, and environmental management to deliver sustainable, locally relevant land restoration for Nigeria's energy sector.</p>
+    <div class="cta-actions">
+      <a href="#tool" class="btn-primary">Try the Assessment Tool</a>
+      <a href="mailto:info@tiic.ncdmb.com.ng" class="btn-outline">Contact NCDMB TIIC</a>
+    </div>
+    <p style="margin-top:2rem;font-size:0.8rem;opacity:0.5">A.A. Gwabare Commodities and Agro-Allied Ltd — TICC 2025/2026 Submission</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">Soil<span>AI</span> — AA Gwabare Group</div>
+      <div style="margin-top:0.25rem;font-size:0.8rem;">From Soil to Markets — Powering Africa's Agricultural Future</div>
+    </div>
+    <div class="footer-links">
+      <a href="#problem">Problem</a>
+      <a href="#solution">Solution</a>
+      <a href="#tool">Assessment</a>
+      <a href="#team">Team</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function setTab(tab, btn) {
+  document.querySelectorAll('.tool-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  ['basic','contam','location'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+function runAnalysis() {
+  const ph = parseFloat(document.getElementById('ph').value) || 6.5;
+  const ec = parseFloat(document.getElementById('ec').value) || 0.5;
+  const oc = parseFloat(document.getElementById('oc').value) || 2;
+  const tph = parseFloat(document.getElementById('tph').value) || 0;
+  const pb = parseFloat(document.getElementById('pb').value) || 0;
+  const moisture = document.getElementById('moisture').value || 'optimal';
+  const veg = document.getElementById('veg').value || 'moderate';
+
+  let score = 0;
+  let issues = [];
+  let recos = [];
+
+  // pH scoring
+  if (ph < 4.5) { score += 30; issues.push('Critically acidic soil (pH ' + ph + ')'); }
+  else if (ph < 5.5) { score += 20; issues.push('Acidic soil (pH ' + ph + ') limiting nutrient availability'); }
+  else if (ph > 8.5) { score += 20; issues.push('Highly alkaline soil (pH ' + ph + ')'); }
+  else if (ph >= 6 && ph <= 7.5) {}
+  else { score += 8; }
+
+  // TPH
+  if (tph > 20000) { score += 35; issues.push('Critical hydrocarbon contamination (' + tph.toLocaleString() + ' mg/kg TPH)'); }
+  else if (tph > 5000) { score += 25; issues.push('High hydrocarbon contamination (' + tph.toLocaleString() + ' mg/kg TPH)'); }
+  else if (tph > 1000) { score += 12; issues.push('Moderate hydrocarbon contamination'); }
+
+  // OC
+  if (oc < 0.5) { score += 20; issues.push('Critically low organic carbon (' + oc + '%)'); }
+  else if (oc < 1.5) { score += 12; issues.push('Low organic carbon content (' + oc + '%)'); }
+
+  // Lead
+  if (pb > 300) { score += 15; issues.push('Lead contamination above safe limits'); }
+  else if (pb > 85) { score += 8; issues.push('Elevated lead levels'); }
+
+  // Moisture
+  if (moisture === 'dry' || moisture === 'waterlogged') { score += 8; issues.push('Suboptimal moisture conditions'); }
+
+  // Vegetation
+  if (veg === 'none') { score += 10; issues.push('No vegetation cover — soil exposed and vulnerable'); }
+  else if (veg === 'sparse') { score += 5; }
+
+  score = Math.min(score, 100);
+
+  let severity, color, bars;
+  if (score >= 70) {
+    severity = 'CRITICAL DEGRADATION';
+    bars = [{ w: '75%', c: 'severity-critical' }, { w: '15%', c: 'severity-high' }, { w: '7%', c: 'severity-moderate' }, { w: '3%', c: 'severity-low' }];
+    recos = [
+      { icon: '🦠', title: 'Priority: Bioremediation', body: 'Deploy microbial consortia (Pseudomonas, Bacillus spp.) engineered for TPH degradation. Target 60% reduction in 12 months with fortnightly monitoring.' },
+      { icon: '🌱', title: 'Soil Amendment — Urgent', body: 'Apply biochar (10 t/ha) + lime to raise pH. Follow with compost application (20 t/ha) to restore microbial activity and organic matter.' },
+      { icon: '🌿', title: 'Phytoremediation Species', body: 'Introduce Typha latifolia (cattail) for TPH uptake, Vetiver grass for erosion control, and Acacia auriculiformis for nitrogen fixation.' },
+      { icon: '📋', title: 'Intensive Monitoring Plan', body: 'Monthly soil sampling for 24 months. Quarterly NDVI satellite imagery. DPR/NOSDRA regulatory reporting at 6-month intervals.' }
+    ];
+  } else if (score >= 40) {
+    severity = 'MODERATE TO HIGH DEGRADATION';
+    bars = [{ w: '10%', c: 'severity-critical' }, { w: '55%', c: 'severity-high' }, { w: '25%', c: 'severity-moderate' }, { w: '10%', c: 'severity-low' }];
+    recos = [
+      { icon: '🌾', title: 'Phytoremediation Strategy', body: 'Plant Vetiver grass and leguminous cover crops to stabilise soil and begin hydrocarbon breakdown. Intercrop with Mucuna for nitrogen fixing.' },
+      { icon: '🧪', title: 'Targeted Amendments', body: 'Apply lime or gypsum to correct pH. Supplement with vermicompost at 15 t/ha. Consider slow-release NPK to rebuild soil fertility.' },
+      { icon: '📊', title: 'Progress Monitoring', body: 'Quarterly soil testing for pH, EC, and OC. Bi-annual TPH analysis. Install low-cost IoT sensors for real-time moisture and EC tracking.' },
+      { icon: '👨‍🌾', title: 'Community Integration', body: 'Engage host community for co-management of restoration. Train local agronomists. Plan transitional crops for year 2 post-remediation.' }
+    ];
+  } else if (score >= 20) {
+    severity = 'MILD DEGRADATION — RECOVERABLE';
+    bars = [{ w: '5%', c: 'severity-critical' }, { w: '10%', c: 'severity-high' }, { w: '55%', c: 'severity-moderate' }, { w: '30%', c: 'severity-low' }];
+    recos = [
+      { icon: '🌱', title: 'Soil Enrichment', body: 'Apply organic compost and biochar at maintenance rates. Consider green manure crops in the next season to rebuild organic matter.' },
+      { icon: '🌳', title: 'Native Vegetation Restoration', body: 'Introduce native forest species for long-term ecosystem recovery. Plantain and yam intercropping suitable for early productive land use.' },
+      { icon: '💧', title: 'Water Management', body: 'Implement basic drainage or conservation earthworks to optimise moisture. Avoid waterlogging in clay-heavy areas.' },
+      { icon: '📈', title: 'Light Monitoring', body: 'Semi-annual soil testing. Annual satellite imagery review. Site is viable for agricultural transition within 12–18 months with proper management.' }
+    ];
+  } else {
+    severity = 'MINIMAL DEGRADATION — GOOD CONDITION';
+    bars = [{ w: '2%', c: 'severity-critical' }, { w: '3%', c: 'severity-high' }, { w: '15%', c: 'severity-moderate' }, { w: '80%', c: 'severity-low' }];
+    recos = [
+      { icon: '✅', title: 'Maintenance Programme', body: 'Soil is in relatively good condition. Apply annual compost top-dressing and maintain cover crops to preserve organic matter levels.' },
+      { icon: '🌾', title: 'Agricultural Suitability', body: 'Site is suitable for most food crops. Consider mixed farming with vegetables, legumes, and tree crops for maximum productivity.' },
+      { icon: '🔍', title: 'Preventive Monitoring', body: 'Annual soil health check recommended. Install basic IoT moisture sensor. Monitor for any new contamination events from nearby oil infrastructure.' },
+      { icon: '📋', title: 'ESG Documentation', body: 'Document current soil health baseline for future ESG reporting. Establish monitoring trail for regulatory compliance purposes.' }
+    ];
+  }
+
+  const panel = document.getElementById('result-panel');
+  document.getElementById('severity-label').innerHTML = '<strong>Degradation Severity Score: ' + score + '/100</strong> — ' + severity;
+
+  const barHtml = bars.map(b => '<div class="severity-seg ' + b.c + '" style="flex:' + parseInt(b.w) + '"></div>').join('');
+  document.getElementById('severity-bar').innerHTML = barHtml;
+
+  const issueHtml = issues.length > 0 ? '<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:1rem;margin-bottom:1.5rem;"><p style="font-size:0.85rem;font-weight:600;color:#991b1b;margin-bottom:0.5rem;">Key Issues Identified:</p><ul style="list-style:none;padding:0;">' + issues.map(i => '<li style="font-size:0.83rem;color:#7f1d1d;padding:2px 0;">• ' + i + '</li>').join('') + '</ul></div>' : '';
+
+  const recoHtml = '<div class="recommendations-grid">' + recos.map(r => '<div class="reco-card"><div class="reco-card-title">' + r.icon + ' ' + r.title + '</div><p>' + r.body + '</p></div>').join('') + '</div>';
+
+  document.getElementById('result-content').innerHTML = issueHtml + '<h4 style="font-family:Syne,sans-serif;font-size:1rem;font-weight:700;color:var(--soil);margin-bottom:1rem;margin-top:0.5rem;">AI-Generated Restoration Recommendations</h4>' + recoHtml;
+
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function toggleMobileNav() {
+  const links = document.querySelector('.nav-links');
+  const cta = document.querySelector('.nav-cta');
+  if (links) {
+    const shown = links.style.display === 'flex';
+    links.style.cssText = shown ? '' : 'display:flex;flex-direction:column;position:fixed;top:64px;left:0;right:0;background:rgba(26,58,26,0.98);padding:1rem 2rem;gap:1rem;z-index:99;';
+    if (cta) cta.style.display = shown ? '' : 'block';
+  }
+}
+</script>
+</body>
+</html>
