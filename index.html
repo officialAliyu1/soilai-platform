@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SoilAI — Ecosystem Restoration Platform | AA Gwabare Group</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -347,7 +348,18 @@
   .footer-links a { color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
   .footer-links a:hover { color: var(--sage); }
 
-  /* RESPONSIVE */
+  .download-btn {
+    background: var(--leaf); color: white; border: none; border-radius: 10px;
+    padding: 0.75rem 2rem; font-size: 0.95rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 1.5rem;
+  }
+  .download-btn:hover { background: #235223; }
+  .download-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .result-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; align-items: center; }
+  .report-note { font-size: 0.8rem; color: var(--text-muted); }
+
   @media (max-width: 768px) {
     .nav-links, .nav-cta { display: none; }
     .mobile-menu-btn { display: block; }
@@ -700,6 +712,10 @@
         <div id="severity-label" style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem;"></div>
         <div class="severity-bar" id="severity-bar"></div>
         <div id="result-content"></div>
+        <div class="result-actions">
+          <button class="download-btn" id="download-btn" onclick="downloadReport()">⬇ Download PDF Report</button>
+          <span class="report-note">Generates a branded site assessment report with all findings &amp; recommendations</span>
+        </div>
       </div>
     </div>
   </div>
@@ -923,6 +939,9 @@
 </footer>
 
 <script>
+// Store last analysis result for PDF export
+let lastReport = null;
+
 function setTab(tab, btn) {
   document.querySelectorAll('.tool-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
@@ -937,43 +956,45 @@ function runAnalysis() {
   const oc = parseFloat(document.getElementById('oc').value) || 2;
   const tph = parseFloat(document.getElementById('tph').value) || 0;
   const pb = parseFloat(document.getElementById('pb').value) || 0;
+  const zn = parseFloat(document.getElementById('zn').value) || 0;
+  const ni = parseFloat(document.getElementById('ni').value) || 0;
   const moisture = document.getElementById('moisture').value || 'optimal';
   const veg = document.getElementById('veg').value || 'moderate';
+  const texture = document.getElementById('texture').value || '';
+  const source = document.getElementById('source').value || '';
+  const age = document.getElementById('age').value || '';
+  const state = document.getElementById('state').value || '';
+  const area = document.getElementById('area').value || '';
+  const water = document.getElementById('water').value || '';
 
   let score = 0;
   let issues = [];
   let recos = [];
 
-  // pH scoring
   if (ph < 4.5) { score += 30; issues.push('Critically acidic soil (pH ' + ph + ')'); }
   else if (ph < 5.5) { score += 20; issues.push('Acidic soil (pH ' + ph + ') limiting nutrient availability'); }
   else if (ph > 8.5) { score += 20; issues.push('Highly alkaline soil (pH ' + ph + ')'); }
   else if (ph >= 6 && ph <= 7.5) {}
   else { score += 8; }
 
-  // TPH
   if (tph > 20000) { score += 35; issues.push('Critical hydrocarbon contamination (' + tph.toLocaleString() + ' mg/kg TPH)'); }
   else if (tph > 5000) { score += 25; issues.push('High hydrocarbon contamination (' + tph.toLocaleString() + ' mg/kg TPH)'); }
   else if (tph > 1000) { score += 12; issues.push('Moderate hydrocarbon contamination'); }
 
-  // OC
   if (oc < 0.5) { score += 20; issues.push('Critically low organic carbon (' + oc + '%)'); }
   else if (oc < 1.5) { score += 12; issues.push('Low organic carbon content (' + oc + '%)'); }
 
-  // Lead
   if (pb > 300) { score += 15; issues.push('Lead contamination above safe limits'); }
   else if (pb > 85) { score += 8; issues.push('Elevated lead levels'); }
 
-  // Moisture
   if (moisture === 'dry' || moisture === 'waterlogged') { score += 8; issues.push('Suboptimal moisture conditions'); }
 
-  // Vegetation
   if (veg === 'none') { score += 10; issues.push('No vegetation cover — soil exposed and vulnerable'); }
   else if (veg === 'sparse') { score += 5; }
 
   score = Math.min(score, 100);
 
-  let severity, color, bars;
+  let severity, bars;
   if (score >= 70) {
     severity = 'CRITICAL DEGRADATION';
     bars = [{ w: '75%', c: 'severity-critical' }, { w: '15%', c: 'severity-high' }, { w: '7%', c: 'severity-moderate' }, { w: '3%', c: 'severity-low' }];
@@ -1012,6 +1033,9 @@ function runAnalysis() {
     ];
   }
 
+  // Store for PDF export
+  lastReport = { ph, ec, oc, tph, pb, zn, ni, moisture, veg, texture, source, age, state, area, water, score, severity, issues, recos, date: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) };
+
   const panel = document.getElementById('result-panel');
   document.getElementById('severity-label').innerHTML = '<strong>Degradation Severity Score: ' + score + '/100</strong> — ' + severity;
 
@@ -1026,6 +1050,273 @@ function runAnalysis() {
 
   panel.classList.add('visible');
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function downloadReport() {
+  if (!lastReport) return;
+  const btn = document.getElementById('download-btn');
+  btn.disabled = true;
+  btn.textContent = 'Generating PDF...';
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, H = 297;
+  const margin = 18;
+  const col = W - margin * 2;
+  let y = 0;
+
+  // ── HELPERS ──────────────────────────────────────────────
+  const hex2rgb = h => { const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16); return [r,g,b]; };
+  const setFill = h => { const [r,g,b] = hex2rgb(h); doc.setFillColor(r,g,b); };
+  const setDraw = h => { const [r,g,b] = hex2rgb(h); doc.setDrawColor(r,g,b); };
+  const setTxt  = h => { const [r,g,b] = hex2rgb(h); doc.setTextColor(r,g,b); };
+
+  const SOIL  = '#1a3a1a';
+  const MOSS  = '#4a8c3f';
+  const SAGE  = '#7ab87a';
+  const SAND  = '#f5f0e8';
+  const MUTED = '#5a6a5a';
+  const WHITE = '#ffffff';
+  const RED   = '#c0392b';
+  const AMBER = '#d4860a';
+  const GOLD  = '#e8c547';
+
+  // ── PAGE 1: COVER ─────────────────────────────────────────
+  setFill(SOIL); doc.rect(0, 0, W, H, 'F');
+
+  // decorative top stripe
+  setFill(MOSS); doc.rect(0, 0, W, 4, 'F');
+
+  // logo circle
+  setFill(MOSS); doc.circle(margin + 8, 28, 8, 'F');
+  setTxt(WHITE); doc.setFontSize(10); doc.setFont('helvetica','bold');
+  doc.text('S', margin + 5.5, 31);
+
+  // company name
+  setTxt(SAGE); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('A.A. GWABARE COMMODITIES AND AGRO-ALLIED LTD', margin + 20, 26);
+  setTxt(WHITE); doc.setFontSize(8);
+  doc.text('soilai-platform.vercel.app', margin + 20, 32);
+
+  // divider
+  setFill('#2d5a2d'); doc.rect(margin, 40, col, 0.5, 'F');
+
+  // main title
+  y = 65;
+  setTxt(WHITE); doc.setFontSize(28); doc.setFont('helvetica','bold');
+  doc.text('SOIL HEALTH &', margin, y);
+  y += 12;
+  doc.text('ECOSYSTEM RESTORATION', margin, y);
+  y += 12;
+  setTxt(SAGE); doc.text('ASSESSMENT REPORT', margin, y);
+
+  y += 20;
+  setTxt(WHITE); doc.setFontSize(11); doc.setFont('helvetica','normal');
+  doc.text('AI-Driven Decision Support System for', margin, y);
+  y += 6;
+  doc.text('Oil & Gas-Impacted Lands', margin, y);
+
+  // score box
+  y += 20;
+  setFill('#0d2010'); doc.roundedRect(margin, y, col, 44, 4, 4, 'F');
+  setFill(MOSS); doc.roundedRect(margin, y, col, 44, 4, 4, 'S');
+
+  const scoreColor = lastReport.score >= 70 ? '#e74c3c' : lastReport.score >= 40 ? '#e67e22' : lastReport.score >= 20 ? '#f1c40f' : SAGE;
+  const [sr,sg,sb] = hex2rgb(scoreColor);
+  doc.setTextColor(sr,sg,sb);
+  doc.setFontSize(42); doc.setFont('helvetica','bold');
+  doc.text(String(lastReport.score), margin + 14, y + 28);
+
+  setTxt(WHITE); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('/ 100', margin + 34, y + 28);
+  doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text(lastReport.severity, margin + 55, y + 20);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  setTxt(SAGE);
+  doc.text('Degradation Severity Score', margin + 55, y + 29);
+  setTxt(WHITE);
+  doc.text('Generated: ' + lastReport.date, margin + 55, y + 38);
+
+  // site metadata
+  y += 60;
+  const meta = [
+    ['State / Region', lastReport.state || 'Not specified'],
+    ['Site Area', lastReport.area ? lastReport.area + ' hectares' : 'Not specified'],
+    ['Contamination Source', lastReport.source || 'Not specified'],
+    ['Contamination Age', lastReport.age || 'Not specified'],
+    ['Water Proximity', lastReport.water || 'Not specified'],
+  ];
+
+  setTxt(SAGE); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text('SITE INFORMATION', margin, y);
+  setFill('#2d5a2d'); doc.rect(margin, y + 2, col, 0.3, 'F');
+  y += 8;
+
+  meta.forEach(([k, v]) => {
+    setTxt('#8aaa8a'); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(k + ':', margin, y);
+    setTxt(WHITE); doc.setFont('helvetica','bold');
+    doc.text(v, margin + 55, y);
+    y += 6;
+  });
+
+  // bottom note
+  setTxt('#4a6a4a'); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+  doc.text('This report was generated by the SoilAI platform developed by A.A. Gwabare Commodities and Agro-Allied Ltd.', margin, H - 12);
+  doc.text('For professional remediation services, contact: info@aagwabare.com.ng', margin, H - 7);
+
+  // ── PAGE 2: SOIL DATA + ISSUES ────────────────────────────
+  doc.addPage();
+  setFill(SAND); doc.rect(0, 0, W, H, 'F');
+
+  // header band
+  setFill(SOIL); doc.rect(0, 0, W, 20, 'F');
+  setFill(MOSS); doc.rect(0, 20, W, 2, 'F');
+  setTxt(WHITE); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text('SOIL PARAMETERS & FIELD DATA', margin, 14);
+  setTxt(SAGE); doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text('Page 2 of 3', W - margin - 18, 14);
+
+  y = 34;
+
+  // Parameter table header
+  setFill(SOIL); doc.roundedRect(margin, y, col, 8, 2, 2, 'F');
+  setTxt(WHITE); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text('PARAMETER', margin + 4, y + 5.5);
+  doc.text('VALUE', margin + 70, y + 5.5);
+  doc.text('REFERENCE RANGE', margin + 110, y + 5.5);
+  doc.text('STATUS', margin + 160, y + 5.5);
+  y += 10;
+
+  const params = [
+    { name: 'Soil pH', val: String(lastReport.ph), ref: '6.0 – 7.5 (optimal)', status: lastReport.ph < 4.5 ? 'CRITICAL' : lastReport.ph < 5.5 ? 'LOW' : lastReport.ph > 8.5 ? 'HIGH' : 'NORMAL' },
+    { name: 'Electrical Conductivity', val: lastReport.ec + ' dS/m', ref: '< 1.0 dS/m', status: lastReport.ec > 4 ? 'CRITICAL' : lastReport.ec > 1 ? 'ELEVATED' : 'NORMAL' },
+    { name: 'Organic Carbon', val: lastReport.oc + ' %', ref: '> 2.0 %', status: lastReport.oc < 0.5 ? 'CRITICAL' : lastReport.oc < 1.5 ? 'LOW' : 'NORMAL' },
+    { name: 'Total Petroleum Hydrocarbons', val: lastReport.tph ? lastReport.tph.toLocaleString() + ' mg/kg' : 'Not tested', ref: '< 5,000 mg/kg', status: lastReport.tph > 20000 ? 'CRITICAL' : lastReport.tph > 5000 ? 'HIGH' : lastReport.tph > 1000 ? 'ELEVATED' : 'ACCEPTABLE' },
+    { name: 'Lead (Pb)', val: lastReport.pb ? lastReport.pb + ' mg/kg' : 'Not tested', ref: '< 85 mg/kg', status: lastReport.pb > 300 ? 'CRITICAL' : lastReport.pb > 85 ? 'HIGH' : 'ACCEPTABLE' },
+    { name: 'Zinc (Zn)', val: lastReport.zn ? lastReport.zn + ' mg/kg' : 'Not tested', ref: '< 200 mg/kg', status: lastReport.zn > 200 ? 'ELEVATED' : 'ACCEPTABLE' },
+    { name: 'Nickel (Ni)', val: lastReport.ni ? lastReport.ni + ' mg/kg' : 'Not tested', ref: '< 50 mg/kg', status: lastReport.ni > 50 ? 'ELEVATED' : 'ACCEPTABLE' },
+    { name: 'Moisture Status', val: lastReport.moisture || 'Not recorded', ref: 'Optimal / Adequate', status: (lastReport.moisture === 'dry' || lastReport.moisture === 'waterlogged') ? 'POOR' : 'OK' },
+    { name: 'Vegetation Cover', val: lastReport.veg || 'Not recorded', ref: '> 60% cover', status: lastReport.veg === 'none' ? 'NONE' : lastReport.veg === 'sparse' ? 'LOW' : 'OK' },
+    { name: 'Soil Texture', val: lastReport.texture || 'Not recorded', ref: 'Loamy (ideal)', status: '—' },
+  ];
+
+  const statusColor = s => s === 'CRITICAL' ? '#c0392b' : s === 'HIGH' ? '#d35400' : s === 'ELEVATED' || s === 'LOW' || s === 'POOR' || s === 'NONE' ? '#d4860a' : s === 'NORMAL' || s === 'ACCEPTABLE' || s === 'OK' ? '#27ae60' : MUTED;
+
+  params.forEach((p, i) => {
+    const bg = i % 2 === 0 ? WHITE : '#f0ede6';
+    setFill(bg); doc.rect(margin, y, col, 7.5, 'F');
+    setDraw('#d5c9b8'); doc.rect(margin, y, col, 7.5, 'S');
+
+    setTxt(SOIL); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(p.name, margin + 4, y + 5);
+    doc.text(p.val, margin + 70, y + 5);
+    setTxt(MUTED); doc.text(p.ref, margin + 110, y + 5);
+
+    const sc = statusColor(p.status);
+    const [cr,cg,cb] = hex2rgb(sc);
+    doc.setTextColor(cr,cg,cb);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+    doc.text(p.status, margin + 160, y + 5);
+    y += 7.5;
+  });
+
+  // Issues found
+  if (lastReport.issues.length > 0) {
+    y += 10;
+    setFill(RED); doc.roundedRect(margin, y, col, 8, 2, 2, 'F');
+    setTxt(WHITE); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text('KEY ISSUES IDENTIFIED (' + lastReport.issues.length + ')', margin + 4, y + 5.5);
+    y += 12;
+
+    lastReport.issues.forEach(issue => {
+      setFill('#fff0f0'); doc.roundedRect(margin, y, col, 9, 2, 2, 'F');
+      setFill(RED); doc.rect(margin, y, 3, 9, 'F');
+      setTxt('#991b1b'); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+      const wrapped = doc.splitTextToSize('• ' + issue, col - 12);
+      doc.text(wrapped, margin + 7, y + 6);
+      y += 9 + (wrapped.length - 1) * 4 + 3;
+    });
+  }
+
+  // ── PAGE 3: RECOMMENDATIONS ───────────────────────────────
+  doc.addPage();
+  setFill(WHITE); doc.rect(0, 0, W, H, 'F');
+
+  setFill(SOIL); doc.rect(0, 0, W, 20, 'F');
+  setFill(MOSS); doc.rect(0, 20, W, 2, 'F');
+  setTxt(WHITE); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text('AI-GENERATED RESTORATION RECOMMENDATIONS', margin, 14);
+  setTxt(SAGE); doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text('Page 3 of 3', W - margin - 18, 14);
+
+  y = 34;
+
+  lastReport.recos.forEach((reco, idx) => {
+    // card bg
+    setFill(SAND); doc.roundedRect(margin, y, col, 40, 3, 3, 'F');
+    setFill(MOSS); doc.roundedRect(margin, y, 4, 40, 2, 2, 'F');
+
+    // number badge
+    setFill(SOIL); doc.circle(margin + 16, y + 10, 6, 'F');
+    setTxt(WHITE); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text(String(idx + 1), margin + 13.5, y + 13);
+
+    setTxt(SOIL); doc.setFontSize(10); doc.setFont('helvetica','bold');
+    doc.text(reco.title.replace(/^[^\s]+ /, ''), margin + 26, y + 12);
+
+    setTxt(MUTED); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+    const bodyLines = doc.splitTextToSize(reco.body, col - 32);
+    doc.text(bodyLines, margin + 26, y + 20);
+
+    y += 46;
+  });
+
+  // Monitoring timeline
+  y += 4;
+  setFill(SOIL); doc.roundedRect(margin, y, col, 36, 3, 3, 'F');
+  setTxt(SAGE); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text('RECOMMENDED MONITORING TIMELINE', margin + 4, y + 8);
+
+  const timeline = [
+    { period: 'Month 1–3', action: 'Baseline re-testing, amendment application, sensor installation' },
+    { period: 'Month 3–6', action: 'First remediation cycle monitoring, vegetation establishment' },
+    { period: 'Month 6–12', action: 'Mid-point soil testing, satellite NDVI imagery, progress report' },
+    { period: 'Month 12–24', action: 'Full assessment, regulatory compliance report, post-restoration land use planning' },
+  ];
+  let tx = margin + 4;
+  timeline.forEach((t, i) => {
+    const boxW = (col - 8) / 4;
+    setFill('#0d2010'); doc.roundedRect(tx, y + 12, boxW - 2, 20, 2, 2, 'F');
+    setTxt(GOLD); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.text(t.period, tx + 2, y + 18);
+    setTxt(WHITE); doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+    const lines = doc.splitTextToSize(t.action, boxW - 6);
+    doc.text(lines, tx + 2, y + 23);
+    tx += boxW;
+  });
+
+  // disclaimer + footer
+  y += 50;
+  setFill('#f0ede6'); doc.roundedRect(margin, y, col, 18, 2, 2, 'F');
+  setTxt(MUTED); doc.setFontSize(7.5); doc.setFont('helvetica','italic');
+  const disc = 'DISCLAIMER: This report is generated by the SoilAI AI-assisted decision support system and is intended as a planning tool only. It does not replace certified laboratory analysis, professional environmental consultancy, or regulatory site assessments. All remediation activities should be validated by qualified environmental professionals and comply with applicable DPR, NOSDRA, and FEPA regulations.';
+  doc.text(doc.splitTextToSize(disc, col - 8), margin + 4, y + 6);
+
+  // footer bar
+  setFill(SOIL); doc.rect(0, H - 16, W, 16, 'F');
+  setFill(MOSS); doc.rect(0, H - 16, W, 1.5, 'F');
+  setTxt(WHITE); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text('SoilAI — A.A. Gwabare Commodities and Agro-Allied Ltd', margin, H - 7);
+  setTxt(SAGE); doc.setFont('helvetica','normal');
+  doc.text('soilai-platform.vercel.app', W - margin - 46, H - 7);
+
+  // ── SAVE ─────────────────────────────────────────────────
+  const fname = 'SoilAI_Assessment_Report_' + new Date().toISOString().slice(0,10) + '.pdf';
+  doc.save(fname);
+
+  btn.disabled = false;
+  btn.textContent = '⬇ Download PDF Report';
 }
 
 function toggleMobileNav() {
