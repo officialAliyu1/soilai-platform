@@ -6,6 +6,7 @@
 <title>SoilAI — Ecosystem Restoration Platform | AA Gwabare Group</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -360,6 +361,87 @@
   .result-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; align-items: center; }
   .report-note { font-size: 0.8rem; color: var(--text-muted); }
 
+  /* BULK UPLOAD */
+  #bulk { background: white; }
+  .bulk-wrapper {
+    background: var(--sand); border-radius: 20px; padding: 2.5rem;
+    border: 1px solid var(--border); margin-top: 3rem;
+  }
+  .bulk-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+  .bulk-mode-card {
+    background: white; border-radius: 14px; padding: 1.5rem;
+    border: 2px solid var(--border); cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .bulk-mode-card:hover, .bulk-mode-card.active { border-color: var(--moss); background: rgba(74,140,63,0.04); }
+  .bulk-mode-card.active .bulk-mode-icon { background: var(--moss); color: white; }
+  .bulk-mode-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--sand); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; font-size: 1.4rem; transition: all 0.2s; }
+  .bulk-mode-card h3 { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; color: var(--soil); margin-bottom: 0.25rem; }
+  .bulk-mode-card p { font-size: 0.8rem; color: var(--text-muted); }
+  .upload-zone {
+    border: 2px dashed rgba(74,140,63,0.4); border-radius: 14px;
+    padding: 3rem 2rem; text-align: center; background: white;
+    transition: all 0.2s; cursor: pointer; position: relative;
+  }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--moss); background: rgba(74,140,63,0.03); }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .upload-zone h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--soil); margin-bottom: 0.5rem; }
+  .upload-zone p { font-size: 0.875rem; color: var(--text-muted); }
+  .upload-zone .formats { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+  .format-badge { font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 20px; border: 1px solid var(--border); color: var(--moss); background: rgba(74,140,63,0.06); }
+  .template-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(74,140,63,0.06); border: 1px solid rgba(74,140,63,0.15);
+    border-radius: 10px; padding: 0.875rem 1.25rem; margin-top: 1.25rem; flex-wrap: wrap; gap: 0.75rem;
+  }
+  .template-bar p { font-size: 0.85rem; color: var(--text-muted); }
+  .template-bar p strong { color: var(--soil); }
+  .template-btns { display: flex; gap: 0.5rem; }
+  .tpl-btn {
+    font-size: 0.8rem; font-weight: 600; padding: 0.4rem 1rem;
+    border-radius: 8px; border: 1px solid var(--moss); color: var(--moss);
+    background: white; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .tpl-btn:hover { background: var(--moss); color: white; }
+  .parse-progress {
+    display: none; margin-top: 1.5rem; background: white; border-radius: 12px;
+    padding: 1.25rem; border: 1px solid var(--border);
+  }
+  .parse-progress.visible { display: block; }
+  .progress-bar-track { height: 8px; background: var(--sand); border-radius: 4px; overflow: hidden; margin: 0.75rem 0; }
+  .progress-bar-fill { height: 100%; background: var(--moss); border-radius: 4px; transition: width 0.4s ease; width: 0%; }
+  .progress-label { font-size: 0.85rem; color: var(--text-muted); }
+  .bulk-results { display: none; margin-top: 2rem; }
+  .bulk-results.visible { display: block; animation: fadeIn 0.4s ease; }
+  .bulk-results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem; }
+  .bulk-results-header h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--soil); }
+  .bulk-summary-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .summary-pill { font-size: 0.78rem; font-weight: 600; padding: 0.3rem 0.75rem; border-radius: 20px; }
+  .pill-critical { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .pill-high { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+  .pill-mild { background: #fefce8; color: #854d0e; border: 1px solid #fef08a; }
+  .pill-good { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .results-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  .results-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .results-table th { background: var(--soil); color: white; padding: 0.75rem 1rem; text-align: left; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.03em; white-space: nowrap; }
+  .results-table td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
+  .results-table tr:last-child td { border-bottom: none; }
+  .results-table tr:nth-child(even) td { background: var(--sand); }
+  .results-table tr:hover td { background: rgba(74,140,63,0.05); }
+  .score-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
+  .score-critical { background: #fef2f2; color: #991b1b; }
+  .score-high { background: #fff7ed; color: #9a3412; }
+  .score-mild { background: #fefce8; color: #854d0e; }
+  .score-good { background: #f0fdf4; color: #166534; }
+  .detail-btn { font-size: 0.75rem; padding: 0.25rem 0.7rem; border-radius: 6px; border: 1px solid var(--moss); color: var(--moss); background: white; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .detail-btn:hover { background: var(--moss); color: white; }
+  .bulk-actions { display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+  .modal-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: white; border-radius: 20px; padding: 2rem; max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
+  .modal-close { position: absolute; top: 1rem; right: 1rem; background: var(--sand); border: none; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+  .modal-close:hover { background: var(--mist); }
+
   @media (max-width: 768px) {
     .nav-links, .nav-cta { display: none; }
     .mobile-menu-btn { display: block; }
@@ -390,6 +472,7 @@
     <li><a href="#problem">Problem</a></li>
     <li><a href="#solution">Solution</a></li>
     <li><a href="#tool">Assessment Tool</a></li>
+    <li><a href="#bulk">Bulk Upload</a></li>
     <li><a href="#pathways">Pathways</a></li>
     <li><a href="#team">Team</a></li>
   </ul>
@@ -720,6 +803,99 @@
     </div>
   </div>
 </section>
+
+<!-- BULK UPLOAD -->
+<section id="bulk">
+  <div class="container">
+    <div class="section-label">Bulk Data Upload</div>
+    <h2 class="section-title">Upload multiple sites at once</h2>
+    <p class="section-desc">Upload an Excel or CSV file with data for one or hundreds of sites. The platform analyses every row and produces a full results table plus a downloadable combined PDF report.</p>
+    <div class="bulk-wrapper">
+
+      <!-- MODE SELECTOR -->
+      <div class="bulk-modes">
+        <div class="bulk-mode-card active" id="mode-single" onclick="setBulkMode('single')">
+          <div class="bulk-mode-icon">📄</div>
+          <h3>Single Site File</h3>
+          <p>One row of data for one location. Fast and simple.</p>
+        </div>
+        <div class="bulk-mode-card" id="mode-bulk" onclick="setBulkMode('bulk')">
+          <div class="bulk-mode-icon">📊</div>
+          <h3>Multi-Site Bulk Upload</h3>
+          <p>Multiple rows — assess an entire field campaign at once.</p>
+        </div>
+      </div>
+
+      <!-- UPLOAD ZONE -->
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFileUpload(event)">
+        <div class="upload-icon">⬆️</div>
+        <h3>Drop your file here or click to browse</h3>
+        <p>Supported formats: Excel (.xlsx, .xls) and CSV (.csv)</p>
+        <div class="formats">
+          <span class="format-badge">📗 .xlsx</span>
+          <span class="format-badge">📗 .xls</span>
+          <span class="format-badge">📄 .csv</span>
+        </div>
+      </div>
+
+      <!-- TEMPLATE DOWNLOAD BAR -->
+      <div class="template-bar">
+        <p><strong>Don't have a template?</strong> Download our pre-formatted file with all required columns already set up.</p>
+        <div class="template-btns">
+          <button class="tpl-btn" onclick="downloadTemplate('xlsx')">⬇ Excel Template</button>
+          <button class="tpl-btn" onclick="downloadTemplate('csv')">⬇ CSV Template</button>
+        </div>
+      </div>
+
+      <!-- PROGRESS BAR -->
+      <div class="parse-progress" id="parse-progress">
+        <div class="progress-label" id="progress-label">Reading file...</div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <div style="font-size:0.8rem;color:var(--text-muted)" id="progress-sub"></div>
+      </div>
+
+      <!-- RESULTS TABLE -->
+      <div class="bulk-results" id="bulk-results">
+        <div class="bulk-results-header">
+          <h3 id="bulk-results-title">Assessment Results</h3>
+          <div class="bulk-summary-pills" id="bulk-pills"></div>
+        </div>
+        <div class="results-table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Site Name</th>
+                <th>Location</th>
+                <th>pH</th>
+                <th>TPH (mg/kg)</th>
+                <th>Org. Carbon %</th>
+                <th>Score</th>
+                <th>Severity</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody"></tbody>
+          </table>
+        </div>
+        <div class="bulk-actions">
+          <button class="download-btn" onclick="downloadBulkPDF()">⬇ Download Combined PDF Report</button>
+          <button class="tpl-btn" style="padding:0.75rem 1.5rem;font-size:0.875rem;" onclick="clearBulkResults()">✕ Clear &amp; Upload New File</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SITE DETAIL MODAL -->
+<div class="modal-overlay" id="site-modal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('site-modal').classList.remove('open')">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
 
 <!-- PATHWAYS -->
 <section id="pathways">
@@ -1328,6 +1504,386 @@ function toggleMobileNav() {
     if (cta) cta.style.display = shown ? '' : 'block';
   }
 }
+
+// ── BULK UPLOAD ──────────────────────────────────────────────────────────
+
+let bulkMode = 'single';
+let bulkSiteResults = [];
+
+function setBulkMode(mode) {
+  bulkMode = mode;
+  document.getElementById('mode-single').classList.toggle('active', mode === 'single');
+  document.getElementById('mode-bulk').classList.toggle('active', mode === 'bulk');
+}
+
+// Drag-and-drop
+window.addEventListener('DOMContentLoaded', () => {
+  const uploadZone = document.getElementById('upload-zone');
+  if (!uploadZone) return;
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault(); uploadZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  });
+});
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (file) processFile(file);
+}
+
+function processFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['xlsx','xls','csv'].includes(ext)) {
+    alert('Please upload an Excel (.xlsx/.xls) or CSV (.csv) file.');
+    return;
+  }
+  const progress = document.getElementById('parse-progress');
+  const fill = document.getElementById('progress-fill');
+  const label = document.getElementById('progress-label');
+  const sub = document.getElementById('progress-sub');
+  progress.classList.add('visible');
+  document.getElementById('bulk-results').classList.remove('visible');
+  fill.style.background = '#4a8c3f';
+  label.textContent = 'Reading file: ' + file.name;
+  fill.style.width = '20%';
+  sub.textContent = 'Parsing ' + ext.toUpperCase() + ' format...';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    fill.style.width = '50%';
+    sub.textContent = 'Extracting rows...';
+    try {
+      let rows = [];
+      if (ext === 'csv') {
+        rows = parseCSV(e.target.result);
+      } else {
+        const wb = XLSX.read(e.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      }
+      fill.style.width = '75%';
+      sub.textContent = 'Analysing ' + rows.length + ' site(s)...';
+      setTimeout(() => {
+        bulkSiteResults = rows.map((row, i) => analyseRow(row, i + 1));
+        fill.style.width = '100%';
+        label.textContent = '✅ Analysis complete — ' + bulkSiteResults.length + ' site(s) processed';
+        sub.textContent = '';
+        setTimeout(() => renderBulkResults(), 400);
+      }, 600);
+    } catch(err) {
+      label.textContent = '❌ Error reading file: ' + err.message;
+      fill.style.width = '100%'; fill.style.background = '#c0392b';
+    }
+  };
+  if (ext === 'csv') reader.readAsText(file);
+  else reader.readAsBinaryString(file);
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,'').toLowerCase().replace(/ /g,'_'));
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/"/g,''));
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+    return obj;
+  });
+}
+
+function normalise(row, key) {
+  for (const k of Object.keys(row)) {
+    if (k.toLowerCase().replace(/[\s_]/g,'_').replace(/ /g,'_') === key ||
+        k.toLowerCase().replace(/[\s]/g,'_') === key ||
+        k.toLowerCase() === key.replace(/_/g,' ')) return row[k];
+  }
+  return '';
+}
+
+function analyseRow(row, idx) {
+  const get = key => normalise(row, key);
+  const ph  = parseFloat(get('ph')) || 6.5;
+  const ec  = parseFloat(get('ec')) || 0.5;
+  const oc  = parseFloat(get('organic_carbon')) || 2;
+  const tph = parseFloat(get('tph')) || 0;
+  const pb  = parseFloat(get('lead_pb')) || 0;
+  const zn  = parseFloat(get('zinc_zn')) || 0;
+  const ni  = parseFloat(get('nickel_ni')) || 0;
+  const moisture = (get('moisture')||'').toLowerCase();
+  const veg      = (get('vegetation')||'').toLowerCase();
+  const siteName = get('site_name') || ('Site ' + idx);
+  const location = get('location') || '—';
+
+  let score = 0, issues = [];
+  if (ph < 4.5)      { score += 30; issues.push('Critically acidic (pH '+ph+')'); }
+  else if (ph < 5.5) { score += 20; issues.push('Acidic soil (pH '+ph+')'); }
+  else if (ph > 8.5) { score += 20; issues.push('Highly alkaline (pH '+ph+')'); }
+  else if (!(ph >= 6 && ph <= 7.5)) { score += 8; }
+
+  if (tph > 20000)     { score += 35; issues.push('Critical TPH: '+tph.toLocaleString()+' mg/kg'); }
+  else if (tph > 5000) { score += 25; issues.push('High TPH: '+tph.toLocaleString()+' mg/kg'); }
+  else if (tph > 1000) { score += 12; issues.push('Moderate TPH contamination'); }
+
+  if (oc < 0.5)      { score += 20; issues.push('Critical low organic carbon ('+oc+'%)'); }
+  else if (oc < 1.5) { score += 12; issues.push('Low organic carbon ('+oc+'%)'); }
+
+  if (pb > 300)      { score += 15; issues.push('Lead above safe limits'); }
+  else if (pb > 85)  { score += 8;  issues.push('Elevated lead levels'); }
+
+  if (moisture === 'dry' || moisture === 'waterlogged' || moisture === 'severely dry') { score += 8; issues.push('Poor moisture conditions'); }
+  if (veg === 'none' || veg === 'none (0%)') { score += 10; issues.push('No vegetation cover'); }
+  else if (veg === 'sparse' || veg.includes('sparse')) { score += 5; }
+
+  score = Math.min(score, 100);
+
+  let severity, recos;
+  if (score >= 70) {
+    severity = 'CRITICAL';
+    recos = [
+      { title: 'Priority: Bioremediation', body: 'Deploy microbial consortia (Pseudomonas, Bacillus spp.) for TPH degradation. Target 60% reduction in 12 months with fortnightly monitoring.' },
+      { title: 'Urgent Soil Amendment', body: 'Apply biochar (10 t/ha) + lime to raise pH. Follow with compost (20 t/ha) to restore microbial activity.' },
+      { title: 'Phytoremediation Species', body: 'Introduce Typha latifolia for TPH uptake, Vetiver grass for erosion control, Acacia auriculiformis for nitrogen fixation.' },
+      { title: 'Intensive Monitoring', body: 'Monthly soil sampling for 24 months. Quarterly NDVI satellite imagery. DPR/NOSDRA compliance reporting at 6-month intervals.' }
+    ];
+  } else if (score >= 40) {
+    severity = 'HIGH';
+    recos = [
+      { title: 'Phytoremediation Strategy', body: 'Plant Vetiver grass and leguminous cover crops to stabilise soil. Intercrop with Mucuna for nitrogen fixing.' },
+      { title: 'Targeted Amendments', body: 'Apply lime/gypsum for pH correction. Supplement with vermicompost at 15 t/ha. Slow-release NPK to rebuild fertility.' },
+      { title: 'Progress Monitoring', body: 'Quarterly soil testing for pH, EC, OC. Bi-annual TPH analysis. IoT sensors for real-time moisture tracking.' },
+      { title: 'Community Integration', body: 'Engage host community for co-management. Train local agronomists. Plan transitional crops for year 2.' }
+    ];
+  } else if (score >= 20) {
+    severity = 'MILD';
+    recos = [
+      { title: 'Soil Enrichment', body: 'Apply compost and biochar at maintenance rates. Green manure crops in the next season to rebuild organic matter.' },
+      { title: 'Native Vegetation', body: 'Introduce native forest species. Plantain and yam intercropping suitable for early productive land use.' },
+      { title: 'Water Management', body: 'Implement drainage or conservation earthworks to optimise moisture retention.' },
+      { title: 'Light Monitoring', body: 'Semi-annual soil testing. Annual satellite imagery review. Agricultural transition viable within 12–18 months.' }
+    ];
+  } else {
+    severity = 'GOOD';
+    recos = [
+      { title: 'Maintenance Programme', body: 'Annual compost top-dressing and cover crops to preserve organic matter levels.' },
+      { title: 'Agricultural Suitability', body: 'Site suitable for most food crops — mixed farming with vegetables, legumes, and tree crops recommended.' },
+      { title: 'Preventive Monitoring', body: 'Annual soil health check. Basic IoT moisture sensor. Monitor for new contamination events.' },
+      { title: 'ESG Documentation', body: 'Document soil health baseline for ESG reporting. Establish monitoring trail for regulatory compliance.' }
+    ];
+  }
+
+  return { idx, siteName, location, ph, ec, oc, tph, pb, zn, ni, moisture, veg, score, severity, issues, recos,
+    texture: get('texture'), source: get('source'), age: get('age'),
+    area: get('area'), water: get('water_proximity'),
+    date: new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) };
+}
+
+function renderBulkResults() {
+  const counts = { CRITICAL:0, HIGH:0, MILD:0, GOOD:0 };
+  bulkSiteResults.forEach(s => counts[s.severity]++);
+
+  document.getElementById('bulk-results-title').textContent = 'Results — ' + bulkSiteResults.length + ' Site' + (bulkSiteResults.length > 1 ? 's' : '') + ' Analysed';
+  const pills = document.getElementById('bulk-pills');
+  pills.innerHTML = '';
+  if (counts.CRITICAL) pills.innerHTML += '<span class="summary-pill pill-critical">🔴 '+counts.CRITICAL+' Critical</span>';
+  if (counts.HIGH)     pills.innerHTML += '<span class="summary-pill pill-high">🟠 '+counts.HIGH+' High</span>';
+  if (counts.MILD)     pills.innerHTML += '<span class="summary-pill pill-mild">🟡 '+counts.MILD+' Mild</span>';
+  if (counts.GOOD)     pills.innerHTML += '<span class="summary-pill pill-good">🟢 '+counts.GOOD+' Good</span>';
+
+  const tbody = document.getElementById('results-tbody');
+  tbody.innerHTML = '';
+  bulkSiteResults.forEach((s, i) => {
+    const sc = s.severity==='CRITICAL'?'score-critical':s.severity==='HIGH'?'score-high':s.severity==='MILD'?'score-mild':'score-good';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${s.idx}</td><td><strong>${s.siteName}</strong></td><td>${s.location}</td><td>${s.ph}</td><td>${s.tph?s.tph.toLocaleString():'—'}</td><td>${s.oc}%</td><td><span class="score-badge ${sc}">${s.score}/100</span></td><td><span class="score-badge ${sc}">${s.severity}</span></td><td><button class="detail-btn" onclick="openModal(${i})">View →</button></td>`;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('bulk-results').classList.add('visible');
+  document.getElementById('bulk-results').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function openModal(idx) {
+  const s = bulkSiteResults[idx];
+  const sc = s.severity==='CRITICAL'?'score-critical':s.severity==='HIGH'?'score-high':s.severity==='MILD'?'score-mild':'score-good';
+  let html = `<h2 style="font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:700;color:var(--soil);margin-bottom:0.25rem;">${s.siteName}</h2>
+    <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:1.25rem;">📍 ${s.location} &nbsp;|&nbsp; ${s.date}</p>
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <div style="flex:1;min-width:100px;background:var(--sand);border-radius:10px;padding:1rem;text-align:center;">
+        <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--soil);">${s.score}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">/ 100</div>
+      </div>
+      <div style="flex:2;min-width:160px;background:var(--sand);border-radius:10px;padding:1rem;">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.4rem;">Severity</div>
+        <span class="score-badge ${sc}" style="font-size:1rem;">${s.severity}</span>
+      </div>
+    </div>`;
+
+  if (s.issues.length) {
+    html += `<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:10px;padding:1rem;margin-bottom:1.25rem;">
+      <p style="font-size:0.8rem;font-weight:600;color:#991b1b;margin-bottom:0.5rem;">Issues Identified</p>
+      ${s.issues.map(i=>`<p style="font-size:0.82rem;color:#7f1d1d;padding:2px 0;">• ${i}</p>`).join('')}
+    </div>`;
+  }
+
+  html += `<h4 style="font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:var(--soil);margin-bottom:0.75rem;">Recommendations</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+    ${s.recos.map(r=>`<div style="background:var(--sand);border-radius:10px;padding:1rem;border:1px solid var(--border);">
+      <p style="font-size:0.85rem;font-weight:600;color:var(--soil);margin-bottom:0.4rem;">${r.title}</p>
+      <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.5;">${r.body}</p>
+    </div>`).join('')}
+    </div>
+    <button class="download-btn" style="margin-top:1.25rem;" onclick="downloadSingleSitePDF(${idx})">⬇ Download This Site's PDF</button>`;
+
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('site-modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('site-modal')) document.getElementById('site-modal').classList.remove('open');
+}
+
+function clearBulkResults() {
+  bulkSiteResults = [];
+  document.getElementById('bulk-results').classList.remove('visible');
+  document.getElementById('parse-progress').classList.remove('visible');
+  document.getElementById('file-input').value = '';
+}
+
+function downloadTemplate(type) {
+  const headers = ['site_name','location','ph','ec','organic_carbon','tph','lead_pb','zinc_zn','nickel_ni','moisture','vegetation','texture','source','age','area','water_proximity'];
+  const sample = [
+    ['Ogoni Field A','Rivers State','4.2','1.8','0.8','8420','120','180','62','dry','none','sandy','spill','old','3.5','adjacent'],
+    ['Warri Site 2','Delta State','5.8','0.9','1.5','2100','45','90','22','low','sparse','loamy','pipeline','medium','1.2','near'],
+    ['Bayelsa Plot 3','Bayelsa State','6.5','0.4','2.3','320','20','110','15','optimal','moderate','silty','flaring','recent','5.0','far'],
+  ];
+  if (type === 'csv') {
+    const csv = [headers, ...sample].map(r => r.join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download = 'SoilAI_Upload_Template.csv'; a.click();
+  } else {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sample]);
+    ws['!cols'] = headers.map(() => ({ wch: 18 }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Sites');
+    XLSX.writeFile(wb, 'SoilAI_Upload_Template.xlsx');
+  }
+}
+
+function downloadSingleSitePDF(idx) {
+  lastReport = bulkSiteResults[idx];
+  downloadReport();
+}
+
+function downloadBulkPDF() {
+  if (!bulkSiteResults.length) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W=210, H=297, margin=18, col=W-margin*2;
+  const hex2rgb = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const setFill = h => { const [r,g,b]=hex2rgb(h); doc.setFillColor(r,g,b); };
+  const setTxt  = h => { const [r,g,b]=hex2rgb(h); doc.setTextColor(r,g,b); };
+  const setDraw = h => { const [r,g,b]=hex2rgb(h); doc.setDrawColor(r,g,b); };
+  const SOIL='#1a3a1a',MOSS='#4a8c3f',SAGE='#7ab87a',SAND='#f5f0e8',MUTED='#5a6a5a',WHITE='#ffffff';
+  const scoreColor = s => s==='CRITICAL'?'#c0392b':s==='HIGH'?'#d35400':s==='MILD'?'#b7950b':'#27ae60';
+
+  // COVER
+  setFill(SOIL); doc.rect(0,0,W,H,'F');
+  setFill(MOSS); doc.rect(0,0,W,4,'F');
+  setTxt(SAGE); doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('A.A. GWABARE COMMODITIES AND AGRO-ALLIED LTD', margin, 24);
+  setTxt(WHITE); doc.setFontSize(8); doc.text('soilai-platform.vercel.app', margin, 30);
+  doc.setFontSize(26); doc.setFont('helvetica','bold');
+  doc.text('BULK SITE ASSESSMENT', margin, 65);
+  doc.text('REPORT', margin, 79);
+  setTxt(SAGE); doc.setFontSize(11); doc.text('COMBINED FIELD CAMPAIGN RESULTS', margin, 93);
+
+  const counts={CRITICAL:0,HIGH:0,MILD:0,GOOD:0};
+  bulkSiteResults.forEach(s=>counts[s.severity]++);
+  const avgScore = Math.round(bulkSiteResults.reduce((a,s)=>a+s.score,0)/bulkSiteResults.length);
+
+  setFill('#0d2010'); doc.roundedRect(margin,108,col,48,4,4,'F');
+  setFill(MOSS); doc.roundedRect(margin,108,col,48,4,4,'S');
+  setTxt(SAGE); doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text('CAMPAIGN SUMMARY', margin+4, 118);
+  const sumItems=[['Total Sites Assessed',String(bulkSiteResults.length)],['Average Severity Score',avgScore+'/100'],['Critical Sites',String(counts.CRITICAL)],['High Severity',String(counts.HIGH)],['Mild / Good Condition',String(counts.MILD+counts.GOOD)],['Report Date',new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})]];
+  let sy=126;
+  sumItems.forEach(([k,v])=>{ setTxt('#8aaa8a'); doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.text(k+':',margin+4,sy); setTxt(WHITE); doc.setFont('helvetica','bold'); doc.text(v,margin+60,sy); sy+=6; });
+  setTxt('#4a6a4a'); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+  doc.text('This report was generated by the SoilAI platform — A.A. Gwabare Commodities and Agro-Allied Ltd', margin, H-10);
+
+  // OVERVIEW TABLE PAGE
+  doc.addPage();
+  setFill(SAND); doc.rect(0,0,W,H,'F');
+  setFill(SOIL); doc.rect(0,0,W,20,'F');
+  setFill(MOSS); doc.rect(0,20,W,2,'F');
+  setTxt(WHITE); doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.text('ALL SITES — OVERVIEW TABLE', margin, 14);
+  let y=32;
+  setFill(SOIL); doc.rect(margin,y,col,8,'F');
+  setTxt(WHITE); doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+  const colDefs=[['#',8],['Site Name',40],['Location',36],['pH',12],['TPH',22],['OC%',14],['Score',16],['Severity',24]];
+  let cx=margin+2; colDefs.forEach(([l,w])=>{ doc.text(l,cx,y+5.5); cx+=w; }); y+=10;
+  bulkSiteResults.forEach((s,i)=>{
+    if(y>H-30){ doc.addPage(); setFill(SAND); doc.rect(0,0,W,H,'F'); y=20; }
+    setFill(i%2===0?WHITE:'#f0ede6'); doc.rect(margin,y,col,7,'F');
+    setDraw('#d5c9b8'); doc.rect(margin,y,col,7,'S');
+    const [cr,cg,cb]=hex2rgb(scoreColor(s.severity));
+    let cx2=margin+2;
+    [[String(s.idx),8],[s.siteName.substring(0,20),40],[s.location.substring(0,18),36],[String(s.ph),12],[s.tph?s.tph.toLocaleString():'—',22],[s.oc+'%',14],[s.score+'/100',16],[s.severity,24]].forEach(([val,w],ci)=>{
+      if(ci>=6){doc.setTextColor(cr,cg,cb);doc.setFont('helvetica','bold');}else{setTxt(SOIL);doc.setFont('helvetica','normal');}
+      doc.setFontSize(7.5); doc.text(String(val),cx2,y+4.8); cx2+=w;
+    });
+    y+=7;
+  });
+
+  // INDIVIDUAL SITE PAGES
+  bulkSiteResults.forEach((s,i)=>{
+    doc.addPage();
+    setFill(WHITE); doc.rect(0,0,W,H,'F');
+    setFill(SOIL); doc.rect(0,0,W,16,'F');
+    setFill(MOSS); doc.rect(0,16,W,2,'F');
+    setTxt(WHITE); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text('SITE '+s.idx+': '+s.siteName.toUpperCase(), margin, 11);
+    let py=24;
+    setFill(SAND); doc.roundedRect(margin,py,col,18,3,3,'F');
+    const [sr,sg,sb]=hex2rgb(scoreColor(s.severity));
+    doc.setTextColor(sr,sg,sb); doc.setFontSize(20); doc.setFont('helvetica','bold'); doc.text(String(s.score),margin+6,py+13);
+    setTxt(MUTED); doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.text('/100',margin+18,py+13);
+    doc.setTextColor(sr,sg,sb); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text(s.severity,margin+30,py+11);
+    setTxt(MUTED); doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.text('📍 '+s.location+'   |   '+s.date,margin+30,py+16);
+    py+=24;
+    if(s.issues.length){
+      setFill('#fff0f0'); doc.roundedRect(margin,py,col,6+s.issues.length*5.5,2,2,'F');
+      setFill('#c0392b'); doc.rect(margin,py,3,6+s.issues.length*5.5,'F');
+      setTxt('#991b1b'); doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.text('ISSUES:',margin+6,py+5);
+      s.issues.forEach((iss,ii)=>{ setTxt('#7f1d1d'); doc.setFont('helvetica','normal'); doc.text('• '+iss,margin+6,py+10+ii*5.5); });
+      py+=10+s.issues.length*5.5+6;
+    }
+    setTxt(SOIL); doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.text('RECOMMENDATIONS',margin,py); py+=6;
+    s.recos.forEach((r,ri)=>{
+      setFill(SAND); doc.roundedRect(margin,py,col,18,2,2,'F');
+      setFill(MOSS); doc.roundedRect(margin,py,3,18,1,1,'F');
+      setTxt(SOIL); doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.text((ri+1)+'. '+r.title,margin+6,py+6);
+      setTxt(MUTED); doc.setFont('helvetica','normal');
+      doc.text(doc.splitTextToSize(r.body,col-10).slice(0,2),margin+6,py+11);
+      py+=22;
+    });
+  });
+
+  // FOOTER ON EVERY PAGE
+  const total=doc.getNumberOfPages();
+  for(let p=1;p<=total;p++){
+    doc.setPage(p);
+    setFill(SOIL); doc.rect(0,H-12,W,12,'F');
+    setTxt(WHITE); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.text('SoilAI — A.A. Gwabare Commodities and Agro-Allied Ltd',margin,H-5);
+    setTxt(SAGE); doc.setFont('helvetica','normal'); doc.text('soilai-platform.vercel.app',W-margin-44,H-5);
+  }
+
+  doc.save('SoilAI_Bulk_Assessment_Report_'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+
 </script>
 </body>
 </html>
